@@ -38,6 +38,8 @@
   .msg.a{background:var(--ai-bg);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--border);}
   .msg .l{font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block;}
   .msg.a .l{color:var(--accent);}.msg.u .l{color:var(--text-dim);}
+  .msg img{max-width:280px;border-radius:10px;margin-top:6px;display:block;}
+  .msg .file-badge{display:inline-block;background:var(--accent-dim);color:var(--accent);font-size:11px;font-family:'Space Mono',monospace;padding:3px 8px;border-radius:6px;margin-top:4px;}
 
   .dots{display:inline-flex;gap:5px;padding:6px 0;}
   .dots span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:bo 1.2s infinite;opacity:.5;}
@@ -50,12 +52,32 @@
   .welcome p{font-size:14px;max-width:380px;}
 
   .bar{padding:14px 20px 18px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
-  .wrap{display:flex;gap:10px;max-width:780px;margin:0 auto;}
+
+  /* Attachment preview */
+  .attach-preview{max-width:780px;margin:0 auto 8px;display:none;gap:8px;flex-wrap:wrap;}
+  .attach-preview.show{display:flex;}
+  .attach-item{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text-dim);animation:fi .2s ease;}
+  .attach-item img{width:36px;height:36px;object-fit:cover;border-radius:6px;}
+  .attach-item .ax{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;margin-left:4px;}
+  .attach-item .ax:hover{color:#f87171;}
+
+  .wrap{display:flex;gap:8px;max-width:780px;margin:0 auto;align-items:flex-end;}
+
+  .attach-btn{
+    width:46px;height:46px;background:var(--surface2);border:1px solid var(--border);
+    border-radius:12px;cursor:pointer;display:grid;place-items:center;flex-shrink:0;
+    transition:border-color .15s;
+  }
+  .attach-btn:hover{border-color:var(--accent);}
+  .attach-btn svg{width:18px;height:18px;stroke:var(--text-dim);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
   #inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-family:'DM Sans',sans-serif;font-size:14.5px;color:var(--text);resize:none;outline:none;min-height:46px;max-height:150px;}
   #inp:focus{border-color:var(--accent);}#inp::placeholder{color:var(--text-dim);}
-  #go{width:46px;height:46px;background:var(--accent);border:none;border-radius:12px;cursor:pointer;display:grid;place-items:center;flex-shrink:0;align-self:flex-end;transition:transform .12s,opacity .12s;}
+
+  #go{width:46px;height:46px;background:var(--accent);border:none;border-radius:12px;cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:transform .12s,opacity .12s;}
   #go:hover{transform:scale(1.05);}#go:disabled{opacity:.4;cursor:not-allowed;transform:none;}
   #go svg{width:18px;height:18px;fill:var(--bg);}
+
   .err{color:#f87171;font-size:12px;padding:6px 12px;background:rgba(248,113,113,.08);border-radius:8px;border:1px solid rgba(248,113,113,.2);}
 
   @media(max-width:700px){
@@ -69,26 +91,81 @@
 </head>
 <body>
 <div class="ov" id="ov" onclick="tog()"></div>
+<input type="file" id="fileInput" multiple accept="image/*,.txt,.md,.csv,.json,.js,.py,.html,.css,.xml,.log,.ts,.jsx,.tsx,.yaml,.yml,.toml,.ini,.cfg,.conf,.sh,.bat,.sql,.env,.gitignore" hidden>
+
 <aside class="sidebar" id="sb">
   <div class="sh"><div class="logo">N</div><h1>Nexus AI</h1></div>
   <button class="nb" onclick="nc()">+ New Chat</button>
   <div class="cl" id="cl"></div>
 </aside>
+
 <div class="main">
   <header>
     <button class="mb" onclick="tog()">☰</button>
     <div class="t" id="ht">Nexus AI</div>
-    <span class="badge">llama 3.3 70b</span>
+    <span class="badge">llama 3.3 70b + vision</span>
   </header>
-  <div id="chat"><div class="welcome"><h2>What's on your mind?</h2><p>Ask anything — code, writing, analysis, brainstorming, or just chat. Free and unlimited.</p></div></div>
-  <div class="bar"><div class="wrap">
-    <textarea id="inp" placeholder="Send a message..." rows="1"></textarea>
-    <button id="go"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
-  </div></div>
+
+  <div id="chat"><div class="welcome"><h2>What's on your mind?</h2><p>Ask anything, upload images for analysis, or attach files for context. Free and unlimited.</p></div></div>
+
+  <div class="bar">
+    <div class="attach-preview" id="ap"></div>
+    <div class="wrap">
+      <button class="attach-btn" onclick="document.getElementById('fileInput').click()" title="Attach image or file">
+        <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+      </button>
+      <textarea id="inp" placeholder="Send a message..." rows="1"></textarea>
+      <button id="go"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    </div>
+  </div>
 </div>
+
 <script>
-const ce=document.getElementById('chat'),ip=document.getElementById('inp'),gb=document.getElementById('go'),cl=document.getElementById('cl'),ht=document.getElementById('ht');
+const ce=document.getElementById('chat'),ip=document.getElementById('inp'),gb=document.getElementById('go'),cl=document.getElementById('cl'),ht=document.getElementById('ht'),ap=document.getElementById('ap'),fi=document.getElementById('fileInput');
 let ch={},aid=null,busy=false;
+
+// Pending attachments
+let attachments=[]; // {type:'image'|'file', name, data (base64 for img, text for file), preview?}
+
+fi.addEventListener('change',async(e)=>{
+  for(const f of e.target.files){
+    if(f.type.startsWith('image/')){
+      const b64=await toBase64(f);
+      attachments.push({type:'image',name:f.name,data:b64,preview:b64});
+    }else{
+      const txt=await f.text();
+      attachments.push({type:'file',name:f.name,data:txt});
+    }
+  }
+  fi.value='';
+  renderAttachments();
+});
+
+function toBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=()=>rej(new Error('Read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+function renderAttachments(){
+  ap.innerHTML='';
+  if(!attachments.length){ap.classList.remove('show');return;}
+  ap.classList.add('show');
+  attachments.forEach((a,i)=>{
+    const d=document.createElement('div');d.className='attach-item';
+    if(a.type==='image'){
+      d.innerHTML=`<img src="${a.preview}"><span>${esc(a.name)}</span><button class="ax" onclick="rmAttach(${i})">×</button>`;
+    }else{
+      d.innerHTML=`<span>📄 ${esc(a.name)}</span><button class="ax" onclick="rmAttach(${i})">×</button>`;
+    }
+    ap.appendChild(d);
+  });
+}
+
+window.rmAttach=function(i){attachments.splice(i,1);renderAttachments();};
 
 function load(){try{ch=JSON.parse(localStorage.getItem('nx')||'{}');}catch{}rl();}
 function save(){localStorage.setItem('nx',JSON.stringify(ch));}
@@ -110,9 +187,12 @@ function rl(){
 
 function ra(){
   ce.innerHTML='';
-  if(!aid||!ch[aid]){ce.innerHTML='<div class="welcome"><h2>What\'s on your mind?</h2><p>Ask anything — code, writing, analysis, brainstorming, or just chat. Free and unlimited.</p></div>';ht.textContent='Nexus AI';return;}
+  if(!aid||!ch[aid]){ce.innerHTML='<div class="welcome"><h2>What\'s on your mind?</h2><p>Ask anything, upload images for analysis, or attach files for context. Free and unlimited.</p></div>';ht.textContent='Nexus AI';return;}
   ht.textContent=ch[aid].t;
-  ch[aid].m.forEach(m=>am(m.role==='user'?'u':'a',m.content));
+  ch[aid].m.forEach(m=>{
+    if(m.role==='user') amUser(m.displayText||m.content, m.attachNames||[]);
+    else am('a',m.content);
+  });
 }
 
 function tog(f){
@@ -125,23 +205,95 @@ ip.addEventListener('input',()=>{ip.style.height='auto';ip.style.height=Math.min
 ip.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go();}});
 gb.addEventListener('click',go);
 
+// Drag and drop
+const mainEl=document.querySelector('.main');
+mainEl.addEventListener('dragover',e=>{e.preventDefault();});
+mainEl.addEventListener('drop',async e=>{
+  e.preventDefault();
+  for(const f of e.dataTransfer.files){
+    if(f.type.startsWith('image/')){
+      const b64=await toBase64(f);
+      attachments.push({type:'image',name:f.name,data:b64,preview:b64});
+    }else{
+      const txt=await f.text();
+      attachments.push({type:'file',name:f.name,data:txt});
+    }
+  }
+  renderAttachments();
+});
+
 async function go(){
-  const t=ip.value.trim();if(!t||busy)return;
+  const t=ip.value.trim();
+  const curAttach=[...attachments];
+  if(!t&&!curAttach.length)return;
+  if(busy)return;
   if(!aid)nc();
   busy=true;gb.disabled=true;
-  const c=ch[aid];c.m.push({role:'user',content:t});
-  if(c.m.length===1){c.t=t.length>40?t.slice(0,40)+'…':t;ht.textContent=c.t;rl();}
+
+  const c=ch[aid];
+
+  // Build display text and actual content
+  let displayText=t;
+  let hasImage=false;
+  let contentParts=[];
+
+  // Add file contents to context
+  const fileAttachments=curAttach.filter(a=>a.type==='file');
+  const imageAttachments=curAttach.filter(a=>a.type==='image');
+
+  let textContent=t;
+  if(fileAttachments.length){
+    const fileContext=fileAttachments.map(f=>`[File: ${f.name}]\n${f.data}`).join('\n\n');
+    textContent=fileContext+(t?'\n\n'+t:'');
+    if(!t)displayText='Analyze attached files';
+  }
+
+  if(imageAttachments.length){
+    hasImage=true;
+    if(!t)displayText='What is in this image?';
+    // For vision model, we send image as base64 in content
+    const imgB64=imageAttachments[0].data.split(',')[1]; // strip data:image/...;base64,
+    contentParts=[
+      {type:'text',text:textContent||'Describe this image in detail.'},
+      {type:'image_url',image_url:{url:imageAttachments[0].data}}
+    ];
+  }
+
+  const attachNames=curAttach.map(a=>({type:a.type,name:a.name}));
+
+  // Store message for history
+  const msgObj={
+    role:'user',
+    content:hasImage?contentParts:textContent,
+    displayText:displayText,
+    attachNames:attachNames,
+    hasImage:hasImage
+  };
+  c.m.push(msgObj);
+
+  if(c.m.filter(x=>x.role==='user').length===1){
+    c.t=displayText.length>40?displayText.slice(0,40)+'…':displayText;
+    ht.textContent=c.t;rl();
+  }
+
   const w=ce.querySelector('.welcome');if(w)w.remove();
-  am('u',t);ip.value='';ip.style.height='auto';
+  amUser(displayText,attachNames);
+  ip.value='';ip.style.height='auto';
+  attachments=[];renderAttachments();
+
   const el=am('a','');el.querySelector('.c').innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
 
   try{
+    // Build API messages (strip display-only fields)
+    const apiMsgs=c.m.filter(x=>x.role==='user'||x.role==='assistant').map(x=>{
+      if(x.role==='assistant')return{role:'assistant',content:x.content};
+      return{role:'user',content:x.content};
+    });
+
     const r=await fetch('/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        messages:c.m.filter(x=>x.role==='user'||x.role==='assistant')
-      })
+      body:JSON.stringify({messages:apiMsgs,hasImage:hasImage})
     });
     const d=await r.json();
     if(d.error)throw new Error(d.error);
@@ -154,6 +306,16 @@ async function go(){
     c.m.pop();
   }
   save();busy=false;gb.disabled=false;ce.scrollTop=ce.scrollHeight;ip.focus();
+}
+
+function amUser(text,attachNames){
+  const d=document.createElement('div');d.className='msg u';
+  let extra='';
+  if(attachNames&&attachNames.length){
+    extra=attachNames.map(a=>a.type==='image'?`<span class="file-badge">🖼 ${esc(a.name)}</span>`:`<span class="file-badge">📄 ${esc(a.name)}</span>`).join(' ');
+  }
+  d.innerHTML=`<span class="l">You</span><span class="c">${esc(text)}</span>${extra?' <div style="margin-top:4px">'+extra+'</div>':''}`;
+  ce.appendChild(d);ce.scrollTop=ce.scrollHeight;return d;
 }
 
 function am(r,t){
